@@ -13,9 +13,11 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <script>
-        window.tailwind = {
-            darkMode: 'class',
+        tailwind.config = {
+            darkMode: 'class', // This enables the toggle button logic
             theme: {
                 extend: {
                     colors: { primary: '#d93025' },
@@ -25,7 +27,6 @@
         }
     </script>
 
-    <script defer src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/nepali-date-converter@3.3.1/dist/nepali-date-converter.umd.js" onerror="handleScriptError()"></script>
 
     <style>
@@ -215,10 +216,8 @@
             let iteratorAdDate = new Date(startBsDate.toJsDate());
             const startDayOfWeek = iteratorAdDate.getDay();
 
-            // --- RESTORED LOGIC: Calculate English Date Range ---
             let startEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
             let endEng = "";
-            // ----------------------------------------------------
 
             let row = document.createElement('tr');
             for (let i = 0; i < startDayOfWeek; i++) row.appendChild(createCell(null));
@@ -239,7 +238,6 @@
                 const isSat = row.children.length === 6;
                 const currentAdDate = new Date(iteratorAdDate);
                 
-                // Track end date for range
                 endEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
 
                 row.appendChild(createCell(dayCounter, iteratorAdDate.getDate(), isToday, isSat, isSelected, currentAdDate));
@@ -257,7 +255,6 @@
             fragment.appendChild(row);
             calendarBody.appendChild(fragment);
 
-            // --- RESTORED LOGIC: Update Text ---
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             document.getElementById('englishDateRange').innerText = rangeText;
         }
