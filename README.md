@@ -4,7 +4,7 @@
 
 **Digital Patro** is a lightweight, beautiful Nepali Calendar (Bikram Sambat) designed for the modern web. It runs as a fast Progressive Web App (PWA), meaning you can install it on your phone and check dates even when you are offline.
 
-**[🔴 Live Demo](https://your-username.github.io/digital-patro)**
+**[🔴 Live Demo](https://sanjeev40084.github.io/digital-patro)**
 *(Click the link above to see the app in action!)*
 
 ## ✨ Key Features
