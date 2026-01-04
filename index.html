@@ -106,11 +106,9 @@
                 </button>
             </div>
 
-            <div id="englishDateRange" class="text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1">
-                Loading...
-            </div>
+            <div id="englishDateRange" class="h-3 w-32 mx-auto bg-gray-200 dark:bg-gray-800 rounded animate-pulse mt-1.5 mb-1"></div>
 
-            </div>
+        </div>
 
         <div class="flex-grow overflow-y-auto hide-scroll relative" id="touchSurface">
             <table class="w-full table-fixed border-collapse h-full">
@@ -139,6 +137,14 @@
             });
         }
 
+        // --- IMPLEMENTATION #2: HAPTIC FEEDBACK HELPER ---
+        function triggerHaptic() {
+            // Checks if device supports vibration (Most Android phones do)
+            if (navigator.vibrate) {
+                navigator.vibrate(10); // Very short 10ms pulse
+            }
+        }
+
         // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
@@ -157,6 +163,7 @@
             } else { document.documentElement.classList.remove('dark'); }
         }
         function toggleDarkMode() {
+            triggerHaptic(); // Vibrate on toggle
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
         }
@@ -189,6 +196,7 @@
         }
 
         function goToToday() {
+            triggerHaptic(); // Vibrate on click
             const now = new NepaliDate();
             currentBsYear = now.getYear();
             currentBsMonth = now.getMonth();
@@ -198,12 +206,9 @@
         }
 
         function selectDate(bsYear, bsMonth, bsDay, adDateObj) {
-            // Update State (so we can draw the ring on the grid)
+            triggerHaptic(); // Vibrate on date selection
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
-            // REMOVED LOGIC: We no longer update the "Text Display" because the box is gone.
-            
-            // Re-render
             if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
                 renderCalendar();
             } else {
@@ -214,6 +219,7 @@
         }
 
         function jumpToSelection() {
+            triggerHaptic(); // Vibrate on dropdown change
             currentBsMonth = parseInt(document.getElementById('monthSelect').value);
             currentBsYear = parseInt(document.getElementById('yearSelect').value);
             animationDir = null; 
@@ -221,6 +227,7 @@
         }
 
         function changeMonth(offset) {
+            triggerHaptic(); // Vibrate on slide
             if (offset > 0) animationDir = 'next';
             else animationDir = 'prev';
 
@@ -298,7 +305,12 @@
             calendarBody.appendChild(fragment);
 
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
-            document.getElementById('englishDateRange').innerText = rangeText;
+            
+            // --- UPDATED SKELETON LOGIC ---
+            // Replace the skeleton styling with actual text styling
+            const rangeEl = document.getElementById('englishDateRange');
+            rangeEl.className = "text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1";
+            rangeEl.innerText = rangeText;
         }
 
         function createCell(nepaliText, englishText, isToday, isSaturday, isSelected, adDateObj) {
