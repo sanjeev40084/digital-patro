@@ -43,7 +43,7 @@
             box-shadow: 0 0 0 2px #000000, 0 0 0 4px #ef4444;
         }
 
-        /* --- NEW ANIMATIONS --- */
+        /* --- ANIMATIONS --- */
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
@@ -53,7 +53,6 @@
             to { opacity: 1; transform: translateX(0); }
         }
         
-        /* Classes we will toggle with JS */
         .anim-next { animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
         .anim-prev { animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
     </style>
@@ -71,9 +70,14 @@
             
             <div class="flex flex-wrap justify-between items-center gap-2">
                 <div class="flex items-center gap-2">
-                    <button onclick="goToToday()" class="px-3 py-1.5 bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-sm font-semibold active:scale-95 transition hover:bg-red-100 dark:hover:bg-red-900/50">
-                        Today
+                    <button id="todayBtn" onclick="goToToday()" class="flex flex-col items-start justify-center px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 border border-red-100 dark:border-red-900/30 rounded-lg active:scale-95 transition group min-w-[80px]">
+                        <span class="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide">Today</span>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-sm font-bold text-gray-800 dark:text-gray-100" id="todayNp">...</span>
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400" id="todayEn">...</span>
+                        </div>
                     </button>
+
                     <button onclick="changeMonth(-1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 rounded-lg transition active:scale-95">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
@@ -137,7 +141,7 @@
         // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
-        let animationDir = null; // Track direction for animation
+        let animationDir = null; 
         
         const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -160,6 +164,7 @@
         window.onload = function() {
             if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
             populateDropdowns();
+            initTodayButton(); // Initialize the dynamic button text
             goToToday(); 
             setupSwipe();
             document.addEventListener('keydown', (e) => {
@@ -167,6 +172,18 @@
                 if(e.key === "ArrowRight") changeMonth(1);
             });
         };
+
+        // NEW FUNCTION: Updates the button with today's real data
+        function initTodayButton() {
+            const now = new NepaliDate();
+            const eng = new Date();
+            
+            // Nepali: "Mangsir 15"
+            document.getElementById('todayNp').textContent = `${nepaliMonths[now.getMonth()]} ${now.getDate()}`;
+            
+            // English: "Nov 30"
+            document.getElementById('todayEn').textContent = `${englishMonths[eng.getMonth()]} ${eng.getDate()}`;
+        }
 
         function populateDropdowns() {
             const mSelect = document.getElementById('monthSelect');
@@ -179,7 +196,7 @@
             const now = new NepaliDate();
             currentBsYear = now.getYear();
             currentBsMonth = now.getMonth();
-            animationDir = null; // No animation for "Jump to Today"
+            animationDir = null; 
             selectDate(currentBsYear, currentBsMonth, now.getDate(), new Date());
             updateUI();
         }
@@ -208,12 +225,11 @@
         function jumpToSelection() {
             currentBsMonth = parseInt(document.getElementById('monthSelect').value);
             currentBsYear = parseInt(document.getElementById('yearSelect').value);
-            animationDir = null; // No animation for dropdown jump
+            animationDir = null; 
             updateUI();
         }
 
         function changeMonth(offset) {
-            // Set Animation Direction
             if (offset > 0) animationDir = 'next';
             else animationDir = 'prev';
 
@@ -232,19 +248,12 @@
         function renderCalendar() {
             const calendarBody = document.getElementById('calendarBody');
             
-            // --- ANIMATION RESET ---
-            // We remove classes and force a 'reflow' so the animation restarts
             calendarBody.classList.remove('anim-next', 'anim-prev');
-            void calendarBody.offsetWidth; // Trigger Reflow
+            void calendarBody.offsetWidth; 
             
-            // Apply new animation if direction is set
             if (animationDir === 'next') calendarBody.classList.add('anim-next');
             if (animationDir === 'prev') calendarBody.classList.add('anim-prev');
             
-            // Reset direction for next time
-            // (We keep it until render is done, then clear it or let it persist until next change)
-            // Actually, we don't clear it here, or the class removal above handles it next time.
-
             calendarBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
 
