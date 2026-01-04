@@ -34,8 +34,7 @@
         .no-select { user-select: none; -webkit-user-select: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         
-        /* Selection Ring (Updated to Blue for consistency, or keep Red to stand out?) 
-           Let's keep the Selection Ring RED so it stands out against the BLUE today background. */
+        /* Selection Ring */
         .selected-ring {
             box-shadow: 0 0 0 2px white, 0 0 0 4px #d93025;
             z-index: 10;
@@ -43,6 +42,20 @@
         .dark .selected-ring {
             box-shadow: 0 0 0 2px #000000, 0 0 0 4px #ef4444;
         }
+
+        /* --- NEW ANIMATIONS --- */
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Classes we will toggle with JS */
+        .anim-next { animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        .anim-prev { animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col md:justify-center items-center md:p-4 no-select">
@@ -124,6 +137,7 @@
         // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
+        let animationDir = null; // Track direction for animation
         
         const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -165,6 +179,7 @@
             const now = new NepaliDate();
             currentBsYear = now.getYear();
             currentBsMonth = now.getMonth();
+            animationDir = null; // No animation for "Jump to Today"
             selectDate(currentBsYear, currentBsMonth, now.getDate(), new Date());
             updateUI();
         }
@@ -193,10 +208,15 @@
         function jumpToSelection() {
             currentBsMonth = parseInt(document.getElementById('monthSelect').value);
             currentBsYear = parseInt(document.getElementById('yearSelect').value);
+            animationDir = null; // No animation for dropdown jump
             updateUI();
         }
 
         function changeMonth(offset) {
+            // Set Animation Direction
+            if (offset > 0) animationDir = 'next';
+            else animationDir = 'prev';
+
             currentBsMonth += offset;
             if (currentBsMonth > 11) { currentBsMonth = 0; currentBsYear++; }
             else if (currentBsMonth < 0) { currentBsMonth = 11; currentBsYear--; }
@@ -211,6 +231,20 @@
 
         function renderCalendar() {
             const calendarBody = document.getElementById('calendarBody');
+            
+            // --- ANIMATION RESET ---
+            // We remove classes and force a 'reflow' so the animation restarts
+            calendarBody.classList.remove('anim-next', 'anim-prev');
+            void calendarBody.offsetWidth; // Trigger Reflow
+            
+            // Apply new animation if direction is set
+            if (animationDir === 'next') calendarBody.classList.add('anim-next');
+            if (animationDir === 'prev') calendarBody.classList.add('anim-prev');
+            
+            // Reset direction for next time
+            // (We keep it until render is done, then clear it or let it persist until next change)
+            // Actually, we don't clear it here, or the class removal above handles it next time.
+
             calendarBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
 
@@ -273,9 +307,6 @@
             cell.onclick = () => selectDate(currentBsYear, currentBsMonth, nepaliText, adDateObj);
 
             if (isToday) {
-                // UPDATE: Changed to Blue Theme for high visibility
-                // Light Mode: bg-blue-100
-                // Dark Mode: bg-blue-900 (High Contrast)
                 baseClass += " bg-blue-100 dark:bg-blue-900";
             } else {
                 baseClass += " hover:bg-gray-50 dark:hover:bg-gray-900";
