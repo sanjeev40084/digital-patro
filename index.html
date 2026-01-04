@@ -110,12 +110,7 @@
                 Loading...
             </div>
 
-            <div id="selectionDisplay" class="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center border border-gray-100 dark:border-gray-800 mt-1">
-                <div id="nepaliText" class="text-lg font-bold text-primary dark:text-red-400">Select a date</div>
-                <div id="englishText" class="text-xs text-gray-500 dark:text-gray-400 font-medium">--</div>
             </div>
-
-        </div>
 
         <div class="flex-grow overflow-y-auto hide-scroll relative" id="touchSurface">
             <table class="w-full table-fixed border-collapse h-full">
@@ -203,17 +198,12 @@
         }
 
         function selectDate(bsYear, bsMonth, bsDay, adDateObj) {
+            // Update State (so we can draw the ring on the grid)
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
-            const npText = `${nepaliMonths[bsMonth]} ${bsDay}, ${bsYear}`;
-            const adMonth = englishMonthsFull[adDateObj.getMonth()];
-            const adDay = adDateObj.getDate();
-            const adYear = adDateObj.getFullYear();
-            const adWeekday = adDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+            // REMOVED LOGIC: We no longer update the "Text Display" because the box is gone.
             
-            document.getElementById('nepaliText').innerText = npText;
-            document.getElementById('englishText').innerText = `${adWeekday}, ${adMonth} ${adDay}, ${adYear}`;
-
+            // Re-render
             if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
                 renderCalendar();
             } else {
