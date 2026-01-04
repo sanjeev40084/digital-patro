@@ -278,7 +278,16 @@
                 
                 endEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
 
-                row.appendChild(createCell(dayCounter, iteratorAdDate.getDate(), isToday, isSat, isSelected, currentAdDate));
+                // --- NEW LOGIC: Format English Date for 1st of Month ---
+                const adDate = iteratorAdDate.getDate();
+                let engDisplayText = adDate;
+                if (adDate === 1) {
+                    // If date is 1, prepend Month Name (e.g. "Jan 1")
+                    engDisplayText = `${englishMonths[iteratorAdDate.getMonth()]} ${adDate}`;
+                }
+                // -------------------------------------------------------
+
+                row.appendChild(createCell(dayCounter, engDisplayText, isToday, isSat, isSelected, currentAdDate));
                 
                 iteratorAdDate.setDate(iteratorAdDate.getDate() + 1);
                 const nextDayBs = new NepaliDate(iteratorAdDate);
@@ -324,7 +333,7 @@
             cell.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full gap-1">
                     <span class="text-xl md:text-3xl font-bold ${numColor} leading-none select-none">${nepaliText}</span>
-                    <span class="text-[10px] md:text-sm text-gray-400 dark:text-gray-500 font-medium select-none">${englishText}</span>
+                    <span class="text-[10px] md:text-sm text-gray-400 dark:text-gray-500 font-medium select-none text-center">${englishText}</span>
                 </div>
             `;
             return cell;
