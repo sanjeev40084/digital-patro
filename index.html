@@ -33,12 +33,10 @@
         .no-select { user-select: none; -webkit-user-select: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         
-        /* Ring for selection */
         .selected-ring {
             box-shadow: 0 0 0 2px white, 0 0 0 4px #d93025;
             z-index: 10;
         }
-        /* Dark mode ring adjustment for black bg */
         .dark .selected-ring {
             box-shadow: 0 0 0 2px #000000, 0 0 0 4px #ef4444;
         }
@@ -82,6 +80,10 @@
                 </div>
             </div>
 
+            <div id="englishDateRange" class="text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1">
+                Loading...
+            </div>
+
             <div id="selectionDisplay" class="bg-gray-50 dark:bg-gray-900 rounded-lg p-2 text-center border border-gray-100 dark:border-gray-800 mt-1">
                 <div id="nepaliText" class="text-lg font-bold text-primary dark:text-red-400">Select a date</div>
                 <div id="englishText" class="text-xs text-gray-500 dark:text-gray-400 font-medium">--</div>
@@ -116,14 +118,15 @@
             });
         }
 
-        // --- STATE MANAGEMENT ---
+        // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
         
         const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
-        const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const englishMonthsFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-        // --- APP LOGIC ---
+        // --- LOGIC ---
         function handleScriptError() { document.getElementById('error-ui').classList.remove('hidden'); }
         
         function initDarkMode() {
@@ -167,7 +170,7 @@
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
             const npText = `${nepaliMonths[bsMonth]} ${bsDay}, ${bsYear}`;
-            const adMonth = englishMonths[adDateObj.getMonth()];
+            const adMonth = englishMonthsFull[adDateObj.getMonth()];
             const adDay = adDateObj.getDate();
             const adYear = adDateObj.getFullYear();
             const adWeekday = adDateObj.toLocaleDateString('en-US', { weekday: 'long' });
@@ -212,6 +215,11 @@
             let iteratorAdDate = new Date(startBsDate.toJsDate());
             const startDayOfWeek = iteratorAdDate.getDay();
 
+            // --- RESTORED LOGIC: Calculate English Date Range ---
+            let startEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
+            let endEng = "";
+            // ----------------------------------------------------
+
             let row = document.createElement('tr');
             for (let i = 0; i < startDayOfWeek; i++) row.appendChild(createCell(null));
 
@@ -230,6 +238,9 @@
                 const isSelected = (selectedDate.year === currentBsYear && selectedDate.month === currentBsMonth && selectedDate.day === dayCounter);
                 const isSat = row.children.length === 6;
                 const currentAdDate = new Date(iteratorAdDate);
+                
+                // Track end date for range
+                endEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
 
                 row.appendChild(createCell(dayCounter, iteratorAdDate.getDate(), isToday, isSat, isSelected, currentAdDate));
                 
@@ -245,15 +256,17 @@
             while (row.children.length < 7) row.appendChild(createCell(null));
             fragment.appendChild(row);
             calendarBody.appendChild(fragment);
+
+            // --- RESTORED LOGIC: Update Text ---
+            const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
+            document.getElementById('englishDateRange').innerText = rangeText;
         }
 
         function createCell(nepaliText, englishText, isToday, isSaturday, isSelected, adDateObj) {
             const cell = document.createElement('td');
-            // Changed border to dark:border-gray-800 for subtle grid on black
             let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-800 relative transition-colors cursor-pointer";
             
             if (!nepaliText) {
-                // Empty cell: dark:bg-black (or slightly transparent if needed, but black works best here)
                 cell.className = baseClass + " bg-gray-50/30 dark:bg-transparent cursor-default";
                 return cell;
             }
@@ -261,10 +274,10 @@
             cell.onclick = () => selectDate(currentBsYear, currentBsMonth, nepaliText, adDateObj);
 
             if (isToday) {
-                baseClass += " bg-red-50 dark:bg-red-900/30"; // Increased transparency for better visibility on black
+                baseClass += " bg-red-50 dark:bg-red-900/30";
                 cell.innerHTML += `<span class="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full"></span>`;
             } else {
-                baseClass += " hover:bg-gray-50 dark:hover:bg-gray-900"; // Subtle dark gray hover
+                baseClass += " hover:bg-gray-50 dark:hover:bg-gray-900";
             }
 
             if (isSelected) {
