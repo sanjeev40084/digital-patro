@@ -1,4 +1,4 @@
-const CACHE_NAME = 'digital-patro-v17';
+const CACHE_NAME = 'digital-patro-v18';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
