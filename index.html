@@ -17,7 +17,7 @@
     
     <script>
         tailwind.config = {
-            darkMode: 'class', // This enables the toggle button logic
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: { primary: '#d93025' },
@@ -34,6 +34,8 @@
         .no-select { user-select: none; -webkit-user-select: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         
+        /* Selection Ring (Updated to Blue for consistency, or keep Red to stand out?) 
+           Let's keep the Selection Ring RED so it stands out against the BLUE today background. */
         .selected-ring {
             box-shadow: 0 0 0 2px white, 0 0 0 4px #d93025;
             z-index: 10;
@@ -271,8 +273,10 @@
             cell.onclick = () => selectDate(currentBsYear, currentBsMonth, nepaliText, adDateObj);
 
             if (isToday) {
-                baseClass += " bg-red-50 dark:bg-red-900/30";
-                cell.innerHTML += `<span class="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full"></span>`;
+                // UPDATE: Changed to Blue Theme for high visibility
+                // Light Mode: bg-blue-100
+                // Dark Mode: bg-blue-900 (High Contrast)
+                baseClass += " bg-blue-100 dark:bg-blue-900";
             } else {
                 baseClass += " hover:bg-gray-50 dark:hover:bg-gray-900";
             }
