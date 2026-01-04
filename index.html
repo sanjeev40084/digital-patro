@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nepali Calendar</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
+    
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)">
     
@@ -28,6 +33,15 @@
         body { overscroll-behavior-y: contain; }
         .no-select { user-select: none; -webkit-user-select: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
+        
+        /* Animation for selection */
+        .selected-ring {
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #d93025;
+            z-index: 10;
+        }
+        .dark .selected-ring {
+            box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #f87171;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col md:justify-center items-center md:p-4 no-select">
@@ -42,12 +56,11 @@
         <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-3 shrink-0">
             
             <div class="flex flex-wrap justify-between items-center gap-2">
-                
                 <div class="flex items-center gap-2">
                     <button onclick="goToToday()" class="px-3 py-1.5 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-semibold active:scale-95 transition hover:bg-red-100 dark:hover:bg-red-900/30">
                         Today
                     </button>
-                    <button onclick="changeMonth(-1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition active:scale-95" title="Previous Month">
+                    <button onclick="changeMonth(-1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition active:scale-95">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                 </div>
@@ -58,12 +71,10 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button onclick="changeMonth(1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition active:scale-95" title="Next Month">
+                    <button onclick="changeMonth(1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition active:scale-95">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
-
                     <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-
                     <button onclick="toggleDarkMode()" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-full active:scale-95 transition">
                         <svg id="sunIcon" class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         <svg id="moonIcon" class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -71,7 +82,11 @@
                 </div>
             </div>
 
-            <div id="englishDateRange" class="text-center text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">Loading...</div>
+            <div id="selectionDisplay" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 text-center border border-gray-100 dark:border-gray-700 mt-1">
+                <div id="nepaliText" class="text-lg font-bold text-primary dark:text-red-400">Select a date</div>
+                <div id="englishText" class="text-xs text-gray-500 dark:text-gray-400 font-medium">--</div>
+            </div>
+
         </div>
 
         <div class="flex-grow overflow-y-auto hide-scroll relative" id="touchSurface">
@@ -93,6 +108,23 @@
     </div>
 
     <script>
+        // --- PWA REGISTRATION ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(err => console.log('Service Worker Failed', err));
+            });
+        }
+
+        // --- STATE MANAGEMENT ---
+        let currentBsYear, currentBsMonth;
+        // Store selected date globally to persist highlight across renders
+        let selectedDate = { year: null, month: null, day: null };
+        
+        const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
+        const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        // --- APP LOGIC ---
         function handleScriptError() { document.getElementById('error-ui').classList.remove('hidden'); }
         
         function initDarkMode() {
@@ -106,14 +138,10 @@
         }
         initDarkMode();
 
-        let currentBsYear, currentBsMonth;
-        const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
-        const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
         window.onload = function() {
             if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
             populateDropdowns();
-            goToToday();
+            goToToday(); // This sets initial selection to Today
             setupSwipe();
             document.addEventListener('keydown', (e) => {
                 if(e.key === "ArrowLeft") changeMonth(-1);
@@ -132,7 +160,39 @@
             const now = new NepaliDate();
             currentBsYear = now.getYear();
             currentBsMonth = now.getMonth();
+            
+            // Set selection to today automatically
+            selectDate(currentBsYear, currentBsMonth, now.getDate(), new Date());
+            
             updateUI();
+        }
+
+        // NEW: Function to handle clicking a date
+        function selectDate(bsYear, bsMonth, bsDay, adDateObj) {
+            // 1. Update State
+            selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
+
+            // 2. Update Text Display
+            const npText = `${nepaliMonths[bsMonth]} ${bsDay}, ${bsYear}`;
+            // Format AD Date: "Nov 30, 2024"
+            const adMonth = englishMonths[adDateObj.getMonth()]; // Full month name
+            const adDay = adDateObj.getDate();
+            const adYear = adDateObj.getFullYear();
+            const adWeekday = adDateObj.toLocaleDateString('en-US', { weekday: 'long' });
+            
+            document.getElementById('nepaliText').innerText = npText;
+            document.getElementById('englishText').innerText = `${adWeekday}, ${adMonth} ${adDay}, ${adYear}`;
+
+            // 3. Re-render to show visual highlight ring
+            // Only re-render if the month hasn't changed (performance)
+            if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
+                renderCalendar();
+            } else {
+                // If we selected a date from a different month context (rare), just update UI
+                currentBsYear = bsYear;
+                currentBsMonth = bsMonth;
+                updateUI();
+            }
         }
 
         function jumpToSelection() {
@@ -163,9 +223,6 @@
             let iteratorAdDate = new Date(startBsDate.toJsDate());
             const startDayOfWeek = iteratorAdDate.getDay();
 
-            let startEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
-            let endEng = "";
-
             let row = document.createElement('tr');
             for (let i = 0; i < startDayOfWeek; i++) row.appendChild(createCell(null));
 
@@ -181,11 +238,16 @@
 
                 const today = new NepaliDate();
                 const isToday = (currentBsYear === today.getYear() && currentBsMonth === today.getMonth() && dayCounter === today.getDate());
+                
+                // Check if this specific day is currently selected
+                const isSelected = (selectedDate.year === currentBsYear && selectedDate.month === currentBsMonth && selectedDate.day === dayCounter);
                 const isSat = row.children.length === 6;
 
-                endEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
-                
-                row.appendChild(createCell(dayCounter, iteratorAdDate.getDate(), isToday, isSat));
+                // Pass the current AD date for the click handler
+                // Need to clone the date object so it doesn't shift during the loop
+                const currentAdDate = new Date(iteratorAdDate);
+
+                row.appendChild(createCell(dayCounter, iteratorAdDate.getDate(), isToday, isSat, isSelected, currentAdDate));
                 
                 iteratorAdDate.setDate(iteratorAdDate.getDate() + 1);
                 const nextDayBs = new NepaliDate(iteratorAdDate);
@@ -199,22 +261,35 @@
             while (row.children.length < 7) row.appendChild(createCell(null));
             fragment.appendChild(row);
             calendarBody.appendChild(fragment);
-
-            const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
-            document.getElementById('englishDateRange').innerText = rangeText;
         }
 
-        function createCell(nepaliText, englishText, isToday, isSaturday) {
+        function createCell(nepaliText, englishText, isToday, isSaturday, isSelected, adDateObj) {
             const cell = document.createElement('td');
-            let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-700 relative transition-colors";
+            let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-700 relative transition-colors cursor-pointer";
             
+            // Empty Cell
             if (!nepaliText) {
-                cell.className = baseClass + " bg-gray-50/30 dark:bg-gray-800/50";
+                cell.className = baseClass + " bg-gray-50/30 dark:bg-gray-800/50 cursor-default";
                 return cell;
             }
 
-            if (isToday) baseClass += " bg-red-50 dark:bg-red-900/10 ring-1 ring-inset ring-red-500";
-            else baseClass += " hover:bg-gray-50 dark:hover:bg-gray-700";
+            // Click Handler
+            cell.onclick = () => selectDate(currentBsYear, currentBsMonth, nepaliText, adDateObj);
+
+            // Styling Priorities
+            if (isToday) {
+                // Today styling
+                baseClass += " bg-red-50 dark:bg-red-900/10";
+                // Add a small indicator for "Today" even if not selected
+                cell.innerHTML += `<span class="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full"></span>`;
+            } else {
+                baseClass += " hover:bg-gray-50 dark:hover:bg-gray-700";
+            }
+
+            // Selection Styling (High Priority Ring)
+            if (isSelected) {
+                baseClass += " selected-ring rounded-lg";
+            }
 
             cell.className = baseClass;
             const numColor = isSaturday ? "text-red-500" : "text-gray-700 dark:text-gray-200";
