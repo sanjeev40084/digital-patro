@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nepali Calendar</title>
+    
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: '#d93025' },
+                    screens: { 'xs': '360px' }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/nepali-date-converter@3.3.1/dist/nepali-date-converter.umd.js" onerror="handleScriptError()"></script>
+
+    <style>
+        body { overscroll-behavior-y: contain; }
+        .no-select { user-select: none; -webkit-user-select: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col md:justify-center items-center md:p-4 no-select">
+
+    <div id="error-ui" class="hidden fixed inset-0 z-50 bg-white dark:bg-gray-900 flex-col justify-center items-center text-center p-6">
+        <p class="text-red-500 text-xl font-bold mb-4">Connection Failed</p>
+        <button onclick="location.reload()" class="px-6 py-2 bg-primary text-white rounded-lg shadow-lg">Retry</button>
+    </div>
+
+    <div class="w-full max-w-5xl bg-white dark:bg-gray-800 md:rounded-2xl shadow-none md:shadow-xl overflow-hidden flex flex-col h-screen md:h-auto transition-colors duration-300">
+        
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-3 shrink-0">
+            
+            <div class="flex flex-wrap justify-between items-center gap-2">
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="goToToday()" class="px-3 py-1.5 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-semibold active:scale-95 transition hover:bg-red-100 dark:hover:bg-red-900/30">
+                        Today
+                    </button>
+                    <button onclick="changeMonth(-1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition active:scale-95" title="Previous Month">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                </div>
+
+                <div class="flex gap-2 items-center">
+                    <select id="monthSelect" onchange="jumpToSelection()" class="bg-transparent font-bold text-lg text-gray-800 dark:text-white outline-none appearance-none text-center cursor-pointer hover:text-primary transition p-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700"></select>
+                    <select id="yearSelect" onchange="jumpToSelection()" class="bg-transparent font-bold text-lg text-gray-800 dark:text-white outline-none appearance-none cursor-pointer hover:text-primary transition p-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700"></select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="changeMonth(1)" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition active:scale-95" title="Next Month">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+
+                    <button onclick="toggleDarkMode()" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-full active:scale-95 transition">
+                        <svg id="sunIcon" class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="moonIcon" class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="englishDateRange" class="text-center text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">Loading...</div>
+        </div>
+
+        <div class="flex-grow overflow-y-auto hide-scroll relative" id="touchSurface">
+            <table class="w-full table-fixed border-collapse h-full">
+                <thead class="sticky top-0 bg-white dark:bg-gray-800 z-10 shadow-sm">
+                    <tr>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Sun</th>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Mon</th>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Tue</th>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Wed</th>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Thu</th>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Fri</th>
+                        <th class="py-3 text-[10px] md:text-xs font-bold text-red-500 uppercase">Sat</th>
+                    </tr>
+                </thead>
+                <tbody id="calendarBody" class="bg-white dark:bg-gray-800"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function handleScriptError() { document.getElementById('error-ui').classList.remove('hidden'); }
+        
+        function initDarkMode() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else { document.documentElement.classList.remove('dark'); }
+        }
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+        }
+        initDarkMode();
+
+        let currentBsYear, currentBsMonth;
+        const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
+        const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        window.onload = function() {
+            if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
+            populateDropdowns();
+            goToToday();
+            setupSwipe();
+            document.addEventListener('keydown', (e) => {
+                if(e.key === "ArrowLeft") changeMonth(-1);
+                if(e.key === "ArrowRight") changeMonth(1);
+            });
+        };
+
+        function populateDropdowns() {
+            const mSelect = document.getElementById('monthSelect');
+            const ySelect = document.getElementById('yearSelect');
+            nepaliMonths.forEach((m, i) => mSelect.add(new Option(m, i)));
+            for (let y = 2000; y <= 2090; y++) ySelect.add(new Option(y, y));
+        }
+
+        function goToToday() {
+            const now = new NepaliDate();
+            currentBsYear = now.getYear();
+            currentBsMonth = now.getMonth();
+            updateUI();
+        }
+
+        function jumpToSelection() {
+            currentBsMonth = parseInt(document.getElementById('monthSelect').value);
+            currentBsYear = parseInt(document.getElementById('yearSelect').value);
+            updateUI();
+        }
+
+        function changeMonth(offset) {
+            currentBsMonth += offset;
+            if (currentBsMonth > 11) { currentBsMonth = 0; currentBsYear++; }
+            else if (currentBsMonth < 0) { currentBsMonth = 11; currentBsYear--; }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('monthSelect').value = currentBsMonth;
+            document.getElementById('yearSelect').value = currentBsYear;
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const calendarBody = document.getElementById('calendarBody');
+            calendarBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            const startBsDate = new NepaliDate(currentBsYear, currentBsMonth, 1);
+            let iteratorAdDate = new Date(startBsDate.toJsDate());
+            const startDayOfWeek = iteratorAdDate.getDay();
+
+            let startEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
+            let endEng = "";
+
+            let row = document.createElement('tr');
+            for (let i = 0; i < startDayOfWeek; i++) row.appendChild(createCell(null));
+
+            let dayCounter = 1;
+            let keepLooping = true;
+            let safetyLimit = 0;
+
+            while (keepLooping && safetyLimit < 35) {
+                if (row.children.length === 7) {
+                    fragment.appendChild(row);
+                    row = document.createElement('tr');
+                }
+
+                const today = new NepaliDate();
+                const isToday = (currentBsYear === today.getYear() && currentBsMonth === today.getMonth() && dayCounter === today.getDate());
+                const isSat = row.children.length === 6;
+
+                endEng = `${englishMonths[iteratorAdDate.getMonth()]} ${iteratorAdDate.getFullYear()}`;
+                
+                row.appendChild(createCell(dayCounter, iteratorAdDate.getDate(), isToday, isSat));
+                
+                iteratorAdDate.setDate(iteratorAdDate.getDate() + 1);
+                const nextDayBs = new NepaliDate(iteratorAdDate);
+                
+                if (nextDayBs.getMonth() !== currentBsMonth) keepLooping = false;
+                else dayCounter++;
+                
+                safetyLimit++;
+            }
+
+            while (row.children.length < 7) row.appendChild(createCell(null));
+            fragment.appendChild(row);
+            calendarBody.appendChild(fragment);
+
+            const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
+            document.getElementById('englishDateRange').innerText = rangeText;
+        }
+
+        function createCell(nepaliText, englishText, isToday, isSaturday) {
+            const cell = document.createElement('td');
+            let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-700 relative transition-colors";
+            
+            if (!nepaliText) {
+                cell.className = baseClass + " bg-gray-50/30 dark:bg-gray-800/50";
+                return cell;
+            }
+
+            if (isToday) baseClass += " bg-red-50 dark:bg-red-900/10 ring-1 ring-inset ring-red-500";
+            else baseClass += " hover:bg-gray-50 dark:hover:bg-gray-700";
+
+            cell.className = baseClass;
+            const numColor = isSaturday ? "text-red-500" : "text-gray-700 dark:text-gray-200";
+
+            cell.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full gap-1">
+                    <span class="text-xl md:text-3xl font-bold ${numColor} leading-none select-none">${nepaliText}</span>
+                    <span class="text-[10px] md:text-sm text-gray-400 dark:text-gray-500 font-medium select-none">${englishText}</span>
+                </div>
+            `;
+            return cell;
+        }
+
+        function setupSwipe() {
+            const surface = document.getElementById('touchSurface');
+            let tX = 0;
+            surface.addEventListener('touchstart', e => tX = e.changedTouches[0].screenX, {passive: true});
+            surface.addEventListener('touchend', e => {
+                const diff = e.changedTouches[0].screenX - tX;
+                if (diff < -50) changeMonth(1);
+                if (diff > 50) changeMonth(-1);
+            }, {passive: true});
+        }
+    </script>
+</body>
+</html>
