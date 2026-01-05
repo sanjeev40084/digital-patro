@@ -8,7 +8,8 @@
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self'; 
         script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; 
-        style-src 'self' 'unsafe-inline'; 
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+        font-src 'self' https://fonts.gstatic.com;
         img-src 'self' data: https://cdn-icons-png.flaticon.com; 
         connect-src 'self' https://cdn.jsdelivr.net;
     ">
@@ -20,6 +21,10 @@
     
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -29,7 +34,11 @@
             theme: {
                 extend: {
                     colors: { primary: '#d93025' },
-                    screens: { 'xs': '360px' }
+                    screens: { 'xs': '360px' },
+                    fontFamily: {
+                        // Set Poppins as the default sans font
+                        sans: ['Poppins', 'sans-serif'],
+                    }
                 }
             }
         }
@@ -65,7 +74,7 @@
         .anim-prev { animation: slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col md:justify-center items-center md:p-4 no-select">
+<body class="bg-gray-50 text-gray-800 dark:bg-black dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col md:justify-center items-center md:p-4 no-select font-sans">
 
     <div id="error-ui" class="hidden fixed inset-0 z-50 bg-white dark:bg-black flex-col justify-center items-center text-center p-6">
         <p class="text-red-500 text-xl font-bold mb-4">Connection Failed</p>
@@ -259,10 +268,6 @@
             triggerHaptic(); 
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
-            // --- FIXED LOGIC ---
-            // We NO LONGER update the 'englishDateRange' text here. 
-            // We want it to stay as "DEC 2025 - JAN 2026", not switch to "JAN 4"
-            
             if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
                 renderCalendar();
             } else {
@@ -360,7 +365,7 @@
             fragment.appendChild(row);
             calendarBody.appendChild(fragment);
 
-            // --- FIXED: ALWAYS SHOW RANGE TEXT ---
+            // Always show range
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             const textEl = document.getElementById('englishDateRange');
             textEl.innerText = rangeText;
