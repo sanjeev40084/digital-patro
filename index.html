@@ -24,7 +24,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -36,7 +36,8 @@
                     colors: { primary: '#d93025' },
                     screens: { 'xs': '360px' },
                     fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
+                        // Prioritize Noto Sans for everything
+                        sans: ['"Noto Sans Devanagari"', 'sans-serif'],
                     }
                 }
             }
@@ -157,11 +158,8 @@
 
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         
-        // --- SAFE NUMBER MAPPING ---
-        const devanagariNums = {
-          '0': '०', '1': '१', '2': '२', '3': '३', '4': '४',
-          '5': '५', '6': '६', '7': '७', '8': '८', '9': '९'
-        };
+        // --- ROBUST MAPPING ---
+        const digitMap = ['०','१','२','३','४','५','६','७','८','९'];
 
         // --- STATE ---
         let currentBsYear, currentBsMonth;
@@ -207,11 +205,23 @@
             renderCalendar(); 
         }
 
-        // FIXED FUNCTION
-        function toNepaliDigits(str) {
-            if (lang === 'EN') return str; 
-            // Replace using the simple dictionary map
-            return str.toString().replace(/\d/g, match => devanagariNums[match]);
+        // FIXED FUNCTION: Direct Mapping (Fail-safe)
+        function toNepaliDigits(input) {
+            if (lang === 'EN') return input; 
+            
+            const str = input.toString();
+            let result = "";
+            for (let i = 0; i < str.length; i++) {
+                const char = str[i];
+                const digit = parseInt(char);
+                // If it's a number 0-9, map it. Otherwise keep it (e.g. "-")
+                if (!isNaN(digit)) {
+                    result += digitMap[digit];
+                } else {
+                    result += char;
+                }
+            }
+            return result;
         }
 
         initDarkMode();
