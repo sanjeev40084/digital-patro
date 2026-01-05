@@ -17,7 +17,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
+    <link rel="apple-touch-icon" href="icon-light-512.png">
     
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
@@ -36,7 +36,6 @@
                     colors: { primary: '#d93025' },
                     screens: { 'xs': '360px' },
                     fontFamily: {
-                        // Prioritize Noto Sans for everything
                         sans: ['"Noto Sans Devanagari"', 'sans-serif'],
                     }
                 }
@@ -81,18 +80,23 @@
         <button onclick="location.reload()" class="px-6 py-2 bg-primary text-white rounded-lg shadow-lg">Retry</button>
     </div>
 
-    <div class="w-full max-w-5xl bg-white dark:bg-black dark:border dark:border-gray-800 md:rounded-2xl shadow-none md:shadow-xl overflow-hidden flex flex-col h-screen md:h-auto transition-colors duration-300">
+    <div class="w-full max-w-full bg-white dark:bg-black dark:border dark:border-gray-800 md:rounded-2xl shadow-none md:shadow-xl overflow-hidden flex flex-col h-screen md:h-[calc(100vh-2rem)] transition-colors duration-300">
         
         <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-col gap-3 shrink-0">
             
             <div class="flex justify-between items-center w-full mb-1">
-                <button id="todayBtn" onclick="goToToday()" class="flex flex-col items-start justify-center px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 border border-red-100 dark:border-red-900/30 rounded-lg active:scale-95 transition group min-w-[100px]">
-                    <span class="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide">Today</span>
-                    <div class="flex items-baseline gap-1.5">
-                        <span class="text-sm font-bold text-gray-800 dark:text-gray-100" id="todayNp">...</span>
-                        <span class="text-[10px] text-gray-500 dark:text-gray-400" id="todayEn">...</span>
-                    </div>
-                </button>
+                
+                <div class="flex items-center gap-3">
+                    <img id="headerIcon" src="" alt="Logo" class="w-10 h-10 rounded-xl shadow-sm">
+                    
+                    <button id="todayBtn" onclick="goToToday()" class="flex flex-col items-start justify-center px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 border border-red-100 dark:border-red-900/30 rounded-lg active:scale-95 transition group min-w-[100px]">
+                        <span class="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide">Today</span>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-sm font-bold text-gray-800 dark:text-gray-100" id="todayNp">...</span>
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400" id="todayEn">...</span>
+                        </div>
+                    </button>
+                </div>
 
                 <div class="flex items-center gap-2">
                     <button onclick="toggleLanguage()" class="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full active:scale-95 transition shadow-sm font-bold text-xs border border-gray-200 dark:border-gray-700">
@@ -158,29 +162,38 @@
 
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         
-        // --- ROBUST MAPPING ---
+        // --- SAFE NUMBER MAPPING ---
         const digitMap = ['०','१','२','३','४','५','६','७','८','९'];
 
         // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
         let animationDir = null; 
-        
-        // Default is 'NP' (Nepali)
         let lang = localStorage.getItem('calLang') || 'NP'; 
 
         // --- LOGIC ---
         function handleScriptError() { document.getElementById('error-ui').classList.remove('hidden'); }
         
-        function initDarkMode() {
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else { document.documentElement.classList.remove('dark'); }
+        function updateHeaderIcon(isDark) {
+            const iconEl = document.getElementById('headerIcon');
+            iconEl.src = isDark ? 'icon-dark-512.png' : 'icon-light-512.png';
         }
+
+        function initDarkMode() {
+            const isDark = (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches));
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateHeaderIcon(isDark);
+        }
+
         function toggleDarkMode() {
             triggerHaptic(); 
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
+            updateHeaderIcon(isDark);
         }
 
         function toggleLanguage() {
@@ -191,12 +204,8 @@
         }
 
         function updateLanguageUI() {
-            // Update HTML Lang for Fonts
             document.documentElement.lang = (lang === 'NP') ? 'ne' : 'en';
-
-            // Update button label
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
-            
             populateDropdowns(); 
             document.getElementById('monthSelect').value = currentBsMonth;
             document.getElementById('yearSelect').value = currentBsYear;
@@ -205,16 +214,13 @@
             renderCalendar(); 
         }
 
-        // FIXED FUNCTION: Direct Mapping (Fail-safe)
         function toNepaliDigits(input) {
             if (lang === 'EN') return input; 
-            
             const str = input.toString();
             let result = "";
             for (let i = 0; i < str.length; i++) {
                 const char = str[i];
                 const digit = parseInt(char);
-                // If it's a number 0-9, map it. Otherwise keep it (e.g. "-")
                 if (!isNaN(digit)) {
                     result += digitMap[digit];
                 } else {
@@ -229,7 +235,6 @@
         window.onload = function() {
             if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
             
-            // Set initial Lang
             document.documentElement.lang = (lang === 'NP') ? 'ne' : 'en';
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
 
@@ -386,7 +391,6 @@
             fragment.appendChild(row);
             calendarBody.appendChild(fragment);
 
-            // Always show range
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             const textEl = document.getElementById('englishDateRange');
             textEl.innerText = rangeText;
