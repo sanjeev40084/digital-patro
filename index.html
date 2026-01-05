@@ -36,7 +36,6 @@
                     colors: { primary: '#d93025' },
                     screens: { 'xs': '360px' },
                     fontFamily: {
-                        // Set Poppins as the default sans font
                         sans: ['Poppins', 'sans-serif'],
                     }
                 }
@@ -157,7 +156,8 @@
         const weekDaysNP = ["आइत", "सोम", "मंगल", "बुध", "बिही", "शुक्र", "शनि"];
 
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        
+        const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
+
         // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
@@ -188,6 +188,9 @@
         }
 
         function updateLanguageUI() {
+            // Update HTML Lang attribute for accessibility & fonts
+            document.documentElement.lang = (lang === 'NP') ? 'ne' : 'en';
+
             // Update button label
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
             
@@ -201,7 +204,8 @@
 
         function toNepaliDigits(str) {
             if (lang === 'EN') return str; 
-            return str.toString().replace(/[0-9]/g, d => "०१२३४५६७८९"[d]);
+            // Safer mapping approach
+            return str.toString().replace(/\d/g, d => nepaliDigits[parseInt(d)]);
         }
 
         initDarkMode();
@@ -209,14 +213,15 @@
         window.onload = function() {
             if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
             
+            // Set initial Lang
+            document.documentElement.lang = (lang === 'NP') ? 'ne' : 'en';
+            document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
+
             populateDropdowns();
             initTodayButton(); 
             renderWeekHeader();
             goToToday(); 
             setupSwipe();
-            
-            // Set initial Lang Button Label
-            document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
 
             document.addEventListener('keydown', (e) => {
                 if(e.key === "ArrowLeft") changeMonth(-1);
