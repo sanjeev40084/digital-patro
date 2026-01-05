@@ -69,7 +69,6 @@
 
     <div id="error-ui" class="hidden fixed inset-0 z-50 bg-white dark:bg-black flex-col justify-center items-center text-center p-6">
         <p class="text-red-500 text-xl font-bold mb-4">Connection Failed</p>
-        <p class="text-gray-500 text-sm mb-6">Could not load the calendar library.</p>
         <button onclick="location.reload()" class="px-6 py-2 bg-primary text-white rounded-lg shadow-lg">Retry</button>
     </div>
 
@@ -86,10 +85,16 @@
                     </div>
                 </button>
 
-                <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 rounded-full active:scale-95 transition shadow-sm">
-                    <svg id="sunIcon" class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="moonIcon" class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleLanguage()" class="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full active:scale-95 transition shadow-sm font-bold text-xs border border-gray-200 dark:border-gray-700">
+                        <span id="langLabel">अ</span>
+                    </button>
+
+                    <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 rounded-full active:scale-95 transition shadow-sm">
+                        <svg id="sunIcon" class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="moonIcon" class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
             </div>
 
             <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-xl p-1 border border-gray-100 dark:border-gray-800">
@@ -114,15 +119,8 @@
         <div class="flex-grow overflow-y-auto hide-scroll relative bg-white dark:bg-black" id="touchSurface">
             <table class="w-full table-fixed border-collapse h-full">
                 <thead class="sticky top-0 bg-white dark:bg-black z-10 shadow-sm border-b dark:border-gray-800">
-                    <tr>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Sun</th>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Mon</th>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Tue</th>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Wed</th>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Thu</th>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Fri</th>
-                        <th class="py-3 text-[10px] md:text-xs font-bold text-red-500 uppercase">Sat</th>
-                    </tr>
+                    <tr id="weekHeader">
+                        </tr>
                 </thead>
                 <tbody id="calendarBody" class="bg-white dark:bg-black"></tbody>
             </table>
@@ -143,14 +141,23 @@
             if (navigator.vibrate) navigator.vibrate(10); 
         }
 
-        // --- STATE ---
-        const nepaliMonths = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
+        // --- DATA CONSTANTS ---
+        const nepaliMonthsEN = ["Baishakh", "Jestha", "Ashad", "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"];
+        const nepaliMonthsNP = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुष", "माघ", "फागुन", "चैत"];
+        
+        const weekDaysEN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const weekDaysNP = ["आइत", "सोम", "मंगल", "बुध", "बिही", "शुक्र", "शनि"];
+
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const englishMonthsFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+        // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
         let animationDir = null; 
+        
+        // NEW: Language State (Default to English 'EN', toggle to 'NP')
+        let lang = localStorage.getItem('calLang') || 'EN'; 
 
         // --- LOGIC ---
         function handleScriptError() { document.getElementById('error-ui').classList.remove('hidden'); }
@@ -165,16 +172,51 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
         }
+
+        // NEW: Toggle Language Function
+        function toggleLanguage() {
+            triggerHaptic();
+            lang = (lang === 'EN') ? 'NP' : 'EN';
+            localStorage.setItem('calLang', lang);
+            updateLanguageUI();
+        }
+
+        function updateLanguageUI() {
+            // Update Toggle Button Text (Show what you will switch TO)
+            document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
+            
+            // Re-render everything with new language
+            populateDropdowns(); 
+            // Restore selection in dropdown because populateDropdowns wipes it
+            document.getElementById('monthSelect').value = currentBsMonth;
+            document.getElementById('yearSelect').value = currentBsYear;
+            
+            initTodayButton();
+            renderWeekHeader();
+            renderCalendar(); // Re-draw grid with new numbers
+        }
+
+        // Helper: Convert English Numbers to Nepali (e.g., 2082 -> २०८२)
+        function toNepaliDigits(str) {
+            if (lang === 'EN') return str; // Pass through if English mode
+            return str.toString().replace(/[0-9]/g, d => "०१२३४५६७८९"[d]);
+        }
+
         initDarkMode();
 
         window.onload = function() {
-            // Check if Library Loaded Successfully
             if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
             
+            // Initial Render
             populateDropdowns();
             initTodayButton(); 
+            renderWeekHeader();
             goToToday(); 
             setupSwipe();
+            
+            // Set initial Lang Button Label
+            document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
+
             document.addEventListener('keydown', (e) => {
                 if(e.key === "ArrowLeft") changeMonth(-1);
                 if(e.key === "ArrowRight") changeMonth(1);
@@ -184,15 +226,50 @@
         function initTodayButton() {
             const now = new NepaliDate();
             const eng = new Date();
-            document.getElementById('todayNp').textContent = `${nepaliMonths[now.getMonth()]} ${now.getDate()}`;
+            
+            const monthName = (lang === 'NP') ? nepaliMonthsNP[now.getMonth()] : nepaliMonthsEN[now.getMonth()];
+            const dayNum = toNepaliDigits(now.getDate());
+
+            document.getElementById('todayNp').textContent = `${monthName} ${dayNum}`;
             document.getElementById('todayEn').textContent = `${englishMonths[eng.getMonth()]} ${eng.getDate()}`;
+        }
+
+        function renderWeekHeader() {
+            const headerRow = document.getElementById('weekHeader');
+            const days = (lang === 'NP') ? weekDaysNP : weekDaysEN;
+            
+            let html = "";
+            days.forEach((day, i) => {
+                const colorClass = (i === 6) ? "text-red-500" : "text-gray-400 dark:text-gray-500";
+                html += `<th class="py-3 text-[10px] md:text-xs font-bold ${colorClass} uppercase">${day}</th>`;
+            });
+            headerRow.innerHTML = html;
         }
 
         function populateDropdowns() {
             const mSelect = document.getElementById('monthSelect');
             const ySelect = document.getElementById('yearSelect');
-            nepaliMonths.forEach((m, i) => mSelect.add(new Option(m, i)));
-            for (let y = 2000; y <= 2090; y++) ySelect.add(new Option(y, y));
+            
+            // Save current value to restore after rebuild
+            const oldM = mSelect.value;
+            const oldY = ySelect.value;
+
+            mSelect.innerHTML = '';
+            ySelect.innerHTML = '';
+
+            // Use correct array based on Lang
+            const months = (lang === 'NP') ? nepaliMonthsNP : nepaliMonthsEN;
+            
+            months.forEach((m, i) => {
+                // VALUE is always 'i' (0-11) so logic never breaks
+                mSelect.add(new Option(m, i));
+            });
+
+            for (let y = 2000; y <= 2090; y++) {
+                // VALUE is always '2082' (int) so logic never breaks
+                // TEXT is converted (2082 or २०८२)
+                ySelect.add(new Option(toNepaliDigits(y), y));
+            }
         }
 
         function goToToday() {
@@ -238,6 +315,11 @@
         }
 
         function updateUI() {
+            // Because populateDropdowns clears the list, we must be careful.
+            // Actually, we only need to set the value. The options are already there.
+            // But if we switched language, they might need refreshing.
+            // For now, simpler: Just set value.
+            
             document.getElementById('monthSelect').value = currentBsMonth;
             document.getElementById('yearSelect').value = currentBsYear;
             renderCalendar();
@@ -289,7 +371,10 @@
                     engDisplayText = `${englishMonths[iteratorAdDate.getMonth()]} ${adDate}`;
                 }
 
-                row.appendChild(createCell(dayCounter, engDisplayText, isToday, isSat, isSelected, currentAdDate));
+                // Convert 'dayCounter' to Nepali if Lang is NP
+                const displayDay = toNepaliDigits(dayCounter);
+
+                row.appendChild(createCell(displayDay, engDisplayText, isToday, isSat, isSelected, currentAdDate, dayCounter));
                 
                 iteratorAdDate.setDate(iteratorAdDate.getDate() + 1);
                 const nextDayBs = new NepaliDate(iteratorAdDate);
@@ -306,22 +391,23 @@
 
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             
-            // Text Update
             const rangeEl = document.getElementById('englishDateRange');
             rangeEl.className = "text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1";
             rangeEl.innerText = rangeText;
         }
 
-        function createCell(nepaliText, englishText, isToday, isSaturday, isSelected, adDateObj) {
+        // Updated createCell to accept both Display Text and Real Value
+        function createCell(displayText, englishText, isToday, isSaturday, isSelected, adDateObj, realDayValue) {
             const cell = document.createElement('td');
             let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-800 relative transition-colors cursor-pointer";
             
-            if (!nepaliText) {
+            if (!displayText) {
                 cell.className = baseClass + " cursor-default bg-transparent";
                 return cell;
             }
 
-            cell.onclick = () => selectDate(currentBsYear, currentBsMonth, nepaliText, adDateObj);
+            // Important: We pass 'realDayValue' (integer) back to logic, not the Nepali String
+            cell.onclick = () => selectDate(currentBsYear, currentBsMonth, realDayValue, adDateObj);
 
             if (isToday) {
                 baseClass += " bg-blue-100 dark:bg-blue-900";
@@ -338,7 +424,7 @@
 
             cell.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full gap-1">
-                    <span class="text-xl md:text-3xl font-bold ${numColor} leading-none select-none">${nepaliText}</span>
+                    <span class="text-xl md:text-3xl font-bold ${numColor} leading-none select-none">${displayText}</span>
                     <span class="text-[10px] md:text-sm text-gray-400 dark:text-gray-500 font-medium select-none text-center">${englishText}</span>
                 </div>
             `;
