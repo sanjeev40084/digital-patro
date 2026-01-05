@@ -154,7 +154,7 @@
         let selectedDate = { year: null, month: null, day: null };
         let animationDir = null; 
         
-        // CHANGED: Default is now 'NP' (Nepali) instead of 'EN'
+        // Default is 'NP' (Nepali)
         let lang = localStorage.getItem('calLang') || 'NP'; 
 
         // --- LOGIC ---
@@ -259,12 +259,10 @@
             triggerHaptic(); 
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
-            // Pure Date Logic
-            const textEl = document.getElementById('englishDateRange');
-            const dateStr = adDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            textEl.innerText = dateStr;
-            textEl.className = "h-3 w-full text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1.5 mb-1 transition-all duration-300";
-
+            // --- FIXED LOGIC ---
+            // We NO LONGER update the 'englishDateRange' text here. 
+            // We want it to stay as "DEC 2025 - JAN 2026", not switch to "JAN 4"
+            
             if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
                 renderCalendar();
             } else {
@@ -362,13 +360,11 @@
             fragment.appendChild(row);
             calendarBody.appendChild(fragment);
 
+            // --- FIXED: ALWAYS SHOW RANGE TEXT ---
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
-            
             const textEl = document.getElementById('englishDateRange');
-            if (textEl.innerText === "Loading..." || textEl.innerText === "") {
-                 textEl.innerText = rangeText;
-                 textEl.className = "h-3 w-full text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1.5 mb-1 transition-all duration-300";
-            }
+            textEl.innerText = rangeText;
+            textEl.className = "h-3 w-full text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1.5 mb-1 transition-all duration-300";
         }
 
         function createCell(displayText, englishText, isToday, isSaturday, isSelected, adDateObj, realDayValue) {
