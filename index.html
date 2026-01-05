@@ -110,7 +110,7 @@
 
         </div>
 
-        <div class="flex-grow overflow-y-auto hide-scroll relative" id="touchSurface">
+        <div class="flex-grow overflow-y-auto hide-scroll relative bg-white dark:bg-black" id="touchSurface">
             <table class="w-full table-fixed border-collapse h-full">
                 <thead class="sticky top-0 bg-white dark:bg-black z-10 shadow-sm border-b dark:border-gray-800">
                     <tr>
@@ -137,12 +137,9 @@
             });
         }
 
-        // --- IMPLEMENTATION #2: HAPTIC FEEDBACK HELPER ---
+        // --- HAPTIC FEEDBACK ---
         function triggerHaptic() {
-            // Checks if device supports vibration (Most Android phones do)
-            if (navigator.vibrate) {
-                navigator.vibrate(10); // Very short 10ms pulse
-            }
+            if (navigator.vibrate) navigator.vibrate(10); 
         }
 
         // --- STATE ---
@@ -163,7 +160,7 @@
             } else { document.documentElement.classList.remove('dark'); }
         }
         function toggleDarkMode() {
-            triggerHaptic(); // Vibrate on toggle
+            triggerHaptic(); 
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
         }
@@ -196,7 +193,7 @@
         }
 
         function goToToday() {
-            triggerHaptic(); // Vibrate on click
+            triggerHaptic(); 
             const now = new NepaliDate();
             currentBsYear = now.getYear();
             currentBsMonth = now.getMonth();
@@ -206,7 +203,7 @@
         }
 
         function selectDate(bsYear, bsMonth, bsDay, adDateObj) {
-            triggerHaptic(); // Vibrate on date selection
+            triggerHaptic(); 
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
             if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
@@ -219,7 +216,7 @@
         }
 
         function jumpToSelection() {
-            triggerHaptic(); // Vibrate on dropdown change
+            triggerHaptic(); 
             currentBsMonth = parseInt(document.getElementById('monthSelect').value);
             currentBsYear = parseInt(document.getElementById('yearSelect').value);
             animationDir = null; 
@@ -227,7 +224,7 @@
         }
 
         function changeMonth(offset) {
-            triggerHaptic(); // Vibrate on slide
+            triggerHaptic(); 
             if (offset > 0) animationDir = 'next';
             else animationDir = 'prev';
 
@@ -306,8 +303,7 @@
 
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             
-            // --- UPDATED SKELETON LOGIC ---
-            // Replace the skeleton styling with actual text styling
+            // Skeleton to Text transition
             const rangeEl = document.getElementById('englishDateRange');
             rangeEl.className = "text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1";
             rangeEl.innerText = rangeText;
