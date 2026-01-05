@@ -112,15 +112,14 @@
                 </button>
             </div>
 
-            <div id="englishDateRange" class="h-3 w-32 mx-auto bg-gray-200 dark:bg-gray-800 rounded animate-pulse mt-1.5 mb-1"></div>
+            <div id="englishDateRange" class="h-3 w-full text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1.5 mb-1 transition-all duration-300"></div>
 
         </div>
 
         <div class="flex-grow overflow-y-auto hide-scroll relative bg-white dark:bg-black" id="touchSurface">
             <table class="w-full table-fixed border-collapse h-full">
                 <thead class="sticky top-0 bg-white dark:bg-black z-10 shadow-sm border-b dark:border-gray-800">
-                    <tr id="weekHeader">
-                        </tr>
+                    <tr id="weekHeader"></tr>
                 </thead>
                 <tbody id="calendarBody" class="bg-white dark:bg-black"></tbody>
             </table>
@@ -149,14 +148,21 @@
         const weekDaysNP = ["आइत", "सोम", "मंगल", "बुध", "बिही", "शुक्र", "शनि"];
 
         const englishMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const englishMonthsFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        // --- NEW: HOLIDAY DATA (Example for 2081/2082) ---
+        // Format: "YYYY-MM-DD" (Nepali Date)
+        const holidays = {
+            "2082-01-01": { en: "New Year 2082", np: "नयाँ वर्ष २०८२" },
+            "2082-01-11": { en: "Loktantra Diwas", np: "लोकतन्त्र दिवस" },
+            "2082-05-03": { en: "Constitution Day", np: "संविधान दिवस" },
+            "2082-07-15": { en: "Laxmi Puja", np: "लक्ष्मी पूजा" },
+            // Add more dates here as needed
+        };
 
         // --- STATE ---
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
         let animationDir = null; 
-        
-        // NEW: Language State (Default to English 'EN', toggle to 'NP')
         let lang = localStorage.getItem('calLang') || 'EN'; 
 
         // --- LOGIC ---
@@ -173,7 +179,6 @@
             localStorage.theme = isDark ? 'dark' : 'light';
         }
 
-        // NEW: Toggle Language Function
         function toggleLanguage() {
             triggerHaptic();
             lang = (lang === 'EN') ? 'NP' : 'EN';
@@ -182,24 +187,23 @@
         }
 
         function updateLanguageUI() {
-            // Update Toggle Button Text (Show what you will switch TO)
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
-            
-            // Re-render everything with new language
             populateDropdowns(); 
-            // Restore selection in dropdown because populateDropdowns wipes it
             document.getElementById('monthSelect').value = currentBsMonth;
             document.getElementById('yearSelect').value = currentBsYear;
-            
             initTodayButton();
             renderWeekHeader();
-            renderCalendar(); // Re-draw grid with new numbers
+            renderCalendar(); 
         }
 
-        // Helper: Convert English Numbers to Nepali (e.g., 2082 -> २०८२)
         function toNepaliDigits(str) {
-            if (lang === 'EN') return str; // Pass through if English mode
+            if (lang === 'EN') return str; 
             return str.toString().replace(/[0-9]/g, d => "०१२३४५६७८९"[d]);
+        }
+
+        // Helper to format key '2082-01-01'
+        function getHolidayKey(y, m, d) {
+            return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         }
 
         initDarkMode();
@@ -207,14 +211,12 @@
         window.onload = function() {
             if (typeof NepaliDate === 'undefined') { handleScriptError(); return; }
             
-            // Initial Render
             populateDropdowns();
             initTodayButton(); 
             renderWeekHeader();
             goToToday(); 
             setupSwipe();
             
-            // Set initial Lang Button Label
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
 
             document.addEventListener('keydown', (e) => {
@@ -226,10 +228,8 @@
         function initTodayButton() {
             const now = new NepaliDate();
             const eng = new Date();
-            
             const monthName = (lang === 'NP') ? nepaliMonthsNP[now.getMonth()] : nepaliMonthsEN[now.getMonth()];
             const dayNum = toNepaliDigits(now.getDate());
-
             document.getElementById('todayNp').textContent = `${monthName} ${dayNum}`;
             document.getElementById('todayEn').textContent = `${englishMonths[eng.getMonth()]} ${eng.getDate()}`;
         }
@@ -237,7 +237,6 @@
         function renderWeekHeader() {
             const headerRow = document.getElementById('weekHeader');
             const days = (lang === 'NP') ? weekDaysNP : weekDaysEN;
-            
             let html = "";
             days.forEach((day, i) => {
                 const colorClass = (i === 6) ? "text-red-500" : "text-gray-400 dark:text-gray-500";
@@ -249,27 +248,11 @@
         function populateDropdowns() {
             const mSelect = document.getElementById('monthSelect');
             const ySelect = document.getElementById('yearSelect');
-            
-            // Save current value to restore after rebuild
-            const oldM = mSelect.value;
-            const oldY = ySelect.value;
-
             mSelect.innerHTML = '';
             ySelect.innerHTML = '';
-
-            // Use correct array based on Lang
             const months = (lang === 'NP') ? nepaliMonthsNP : nepaliMonthsEN;
-            
-            months.forEach((m, i) => {
-                // VALUE is always 'i' (0-11) so logic never breaks
-                mSelect.add(new Option(m, i));
-            });
-
-            for (let y = 2000; y <= 2090; y++) {
-                // VALUE is always '2082' (int) so logic never breaks
-                // TEXT is converted (2082 or २०८२)
-                ySelect.add(new Option(toNepaliDigits(y), y));
-            }
+            months.forEach((m, i) => mSelect.add(new Option(m, i)));
+            for (let y = 2000; y <= 2090; y++) ySelect.add(new Option(toNepaliDigits(y), y));
         }
 
         function goToToday() {
@@ -285,6 +268,24 @@
         function selectDate(bsYear, bsMonth, bsDay, adDateObj) {
             triggerHaptic(); 
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
+
+            // Check if Holiday
+            const key = getHolidayKey(bsYear, bsMonth, bsDay);
+            const holiday = holidays[key];
+            const textEl = document.getElementById('englishDateRange');
+
+            if (holiday) {
+                // Show Holiday Name if exists
+                const holidayName = (lang === 'NP' && holiday.np) ? holiday.np : holiday.en;
+                textEl.innerText = `✨ ${holidayName}`;
+                textEl.classList.add("text-primary", "dark:text-red-400"); // Highlight color
+            } else {
+                // Show standard English Date if no holiday
+                // We format it simply here: "Jan 1, 2026"
+                const dateStr = adDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                textEl.innerText = dateStr;
+                textEl.classList.remove("text-primary", "dark:text-red-400");
+            }
 
             if(currentBsYear === bsYear && currentBsMonth === bsMonth) {
                 renderCalendar();
@@ -315,11 +316,6 @@
         }
 
         function updateUI() {
-            // Because populateDropdowns clears the list, we must be careful.
-            // Actually, we only need to set the value. The options are already there.
-            // But if we switched language, they might need refreshing.
-            // For now, simpler: Just set value.
-            
             document.getElementById('monthSelect').value = currentBsMonth;
             document.getElementById('yearSelect').value = currentBsYear;
             renderCalendar();
@@ -371,10 +367,13 @@
                     engDisplayText = `${englishMonths[iteratorAdDate.getMonth()]} ${adDate}`;
                 }
 
-                // Convert 'dayCounter' to Nepali if Lang is NP
+                // CHECK FOR HOLIDAY
+                const key = getHolidayKey(currentBsYear, currentBsMonth, dayCounter);
+                const isHoliday = !!holidays[key];
+
                 const displayDay = toNepaliDigits(dayCounter);
 
-                row.appendChild(createCell(displayDay, engDisplayText, isToday, isSat, isSelected, currentAdDate, dayCounter));
+                row.appendChild(createCell(displayDay, engDisplayText, isToday, isSat, isSelected, currentAdDate, dayCounter, isHoliday));
                 
                 iteratorAdDate.setDate(iteratorAdDate.getDate() + 1);
                 const nextDayBs = new NepaliDate(iteratorAdDate);
@@ -391,13 +390,15 @@
 
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             
+            // Only update range text if NOTHING is selected (or just changed month)
+            // But selectDate also updates this. Let's default to Range Text on month load.
             const rangeEl = document.getElementById('englishDateRange');
-            rangeEl.className = "text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1";
             rangeEl.innerText = rangeText;
+            rangeEl.classList.remove("text-primary", "dark:text-red-400"); // Reset color
         }
 
-        // Updated createCell to accept both Display Text and Real Value
-        function createCell(displayText, englishText, isToday, isSaturday, isSelected, adDateObj, realDayValue) {
+        // Updated createCell with isHoliday flag
+        function createCell(displayText, englishText, isToday, isSaturday, isSelected, adDateObj, realDayValue, isHoliday) {
             const cell = document.createElement('td');
             let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-800 relative transition-colors cursor-pointer";
             
@@ -406,7 +407,6 @@
                 return cell;
             }
 
-            // Important: We pass 'realDayValue' (integer) back to logic, not the Nepali String
             cell.onclick = () => selectDate(currentBsYear, currentBsMonth, realDayValue, adDateObj);
 
             if (isToday) {
@@ -422,10 +422,14 @@
             cell.className = baseClass;
             const numColor = isSaturday ? "text-red-500" : "text-gray-700 dark:text-gray-200";
 
+            // Holiday Dot HTML
+            const dotHtml = isHoliday ? `<div class="w-1.5 h-1.5 rounded-full bg-red-500 mt-1"></div>` : '';
+
             cell.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full gap-1">
+                <div class="flex flex-col items-center justify-center h-full gap-0.5">
                     <span class="text-xl md:text-3xl font-bold ${numColor} leading-none select-none">${displayText}</span>
                     <span class="text-[10px] md:text-sm text-gray-400 dark:text-gray-500 font-medium select-none text-center">${englishText}</span>
+                    ${dotHtml}
                 </div>
             `;
             return cell;
