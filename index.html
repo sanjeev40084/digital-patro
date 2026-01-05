@@ -153,7 +153,9 @@
         let currentBsYear, currentBsMonth;
         let selectedDate = { year: null, month: null, day: null };
         let animationDir = null; 
-        let lang = localStorage.getItem('calLang') || 'EN'; 
+        
+        // CHANGED: Default is now 'NP' (Nepali) instead of 'EN'
+        let lang = localStorage.getItem('calLang') || 'NP'; 
 
         // --- LOGIC ---
         function handleScriptError() { document.getElementById('error-ui').classList.remove('hidden'); }
@@ -177,7 +179,9 @@
         }
 
         function updateLanguageUI() {
+            // Update button label
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
+            
             populateDropdowns(); 
             document.getElementById('monthSelect').value = currentBsMonth;
             document.getElementById('yearSelect').value = currentBsYear;
@@ -202,6 +206,7 @@
             goToToday(); 
             setupSwipe();
             
+            // Set initial Lang Button Label
             document.getElementById('langLabel').innerText = (lang === 'EN') ? 'अ' : 'A';
 
             document.addEventListener('keydown', (e) => {
@@ -254,7 +259,7 @@
             triggerHaptic(); 
             selectedDate = { year: bsYear, month: bsMonth, day: bsDay };
 
-            // Pure Date Logic (No Holidays)
+            // Pure Date Logic
             const textEl = document.getElementById('englishDateRange');
             const dateStr = adDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             textEl.innerText = dateStr;
@@ -342,7 +347,6 @@
 
                 const displayDay = toNepaliDigits(dayCounter);
 
-                // Pass realDayValue (dayCounter) back to click handler
                 row.appendChild(createCell(displayDay, engDisplayText, isToday, isSat, isSelected, currentAdDate, dayCounter));
                 
                 iteratorAdDate.setDate(iteratorAdDate.getDate() + 1);
@@ -360,7 +364,6 @@
 
             const rangeText = (startEng === endEng) ? startEng : `${startEng} - ${endEng}`;
             
-            // Revert to range text if needed
             const textEl = document.getElementById('englishDateRange');
             if (textEl.innerText === "Loading..." || textEl.innerText === "") {
                  textEl.innerText = rangeText;
@@ -368,7 +371,6 @@
             }
         }
 
-        // Clean createCell (No Holidays)
         function createCell(displayText, englishText, isToday, isSaturday, isSelected, adDateObj, realDayValue) {
             const cell = document.createElement('td');
             let baseClass = "h-[13vh] md:h-24 align-top p-1 md:p-2 border border-gray-100 dark:border-gray-800 relative transition-colors cursor-pointer";
